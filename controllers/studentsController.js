@@ -1,6 +1,8 @@
 const express = require('express');
 const controller = express.Router();
 
+const {saveStudent, updateStudent} = require('../queries/students')
+
 const studentData = require('../studentData.json');
 
 controller.get('/', (req, res) => {
@@ -34,6 +36,49 @@ controller.get('/:id', (req, res) => {
     }
 })
 
+
+controller.post('/', async (req, res) => {
+    try {    
+        const studentData = req.body;
+        
+        if(!studentData.email){
+            res.status(500).send('Email is required');
+        } else if ( !isValidEmail(studentData.email)) {
+            res.status(500).send('Email is not valid');
+        }
+
+        const student = await saveStudent(studentData)
+        res.json(student);
+    } catch (err){
+        res.status(500).send(err.message)
+    }
+});
+
+function isValidEmail(email){
+    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
+}
+
+controller.put('/', async (req, res) => {
+    try {
+
+        const studentData = req.body;
+
+        //validate email
+        if(studentData.email && !isValidEmail(studentData.email)){
+            res.status(500).send('Please use a valid email');
+            return;
+        }
+
+        const student = await updateStudent(studentData);
+
+        res.json(student);
+
+
+    } catch (err){
+        res.status(500).send(err.message);
+    }
+})
+
 //modify this route so that it takes two params
 // the first is tht id of the first student in the response
 // // the second is the number of students to include in the resppnse
@@ -48,5 +93,6 @@ controller.get('/:startId/:limit', (req, res) => {
 
     res.json(selectedStudents);
 })
+
 
 module.exports = controller;
