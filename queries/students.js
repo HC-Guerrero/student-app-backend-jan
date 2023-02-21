@@ -1,17 +1,30 @@
 // import the db 
-
 const db = require('../db/dbConfig');
 
+const getAllStudents = async () => {
+    const students = await db.any(`
+        SELECT * FROM students;
+    `)
 
-// write queries
+    return students;
+}
+
+const getStudent = async (id) => {
+    const student = await db.oneOrNone(`
+        SELECT * FROM students
+        WHERE id = ${id}
+    `)
+
+    return student;
+}
 
 const saveStudent = async (studentData) => {
     const {firstName, lastName, city, skill, pic, company, email} = studentData;
 
-    const student = await db.one(
-        `INSERT INTO students (first_name, last_name, city, skill, pic, company, email )
-            VALUES ('${firstName}', '${lastName}', '${city}', '${skill}', '${pic}', '${company}', '${email}')
-            RETURNING *;
+    const student = await db.one(`
+        INSERT INTO students (first_name, last_name, city, skill, pic, company, email)
+        VALUES ('${firstName}', '${lastName}', '${city}', '${skill}', '${pic}', '${company}', '${email}')
+        RETURNING *;
         `
     )
 
@@ -50,10 +63,21 @@ const updateStudent = async (studentData) => {
     return student;
 }
 
-//export queries
+const deleteStudent = async (studentId) => {
+    const deletedStudent = await db.one(`
+        DELETE FROM students 
+        WHERE id = ${studentId}
+        RETURNING *;
+    `)
+
+    return deletedStudent;
+}
 
 module.exports = {
+    getAllStudents,
+    getStudent,
     saveStudent, 
-    updateStudent
+    updateStudent, 
+    deleteStudent
 } 
 

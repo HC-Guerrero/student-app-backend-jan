@@ -1,18 +1,17 @@
 const express = require('express');
 const controller = express.Router();
 
-const {saveStudent, updateStudent} = require('../queries/students')
-
+const {getAllStudents, getStudent, saveStudent, updateStudent, deleteStudent} = require('../queries/students')
+const {isValidEmail} = require('../utils/validators');
 const studentData = require('../studentData.json');
 
-controller.get('/', (req, res) => {
+controller.get('/', async (req, res) => {
 
-    const students = studentData.students;
-
+    const students = await getAllStudents();
     res.json(students);
 })
 
-controller.get('/:id', (req, res) => {
+controller.get('/:id', async (req, res) => {
 
         const {id} = req.params;
         try {
@@ -23,7 +22,7 @@ controller.get('/:id', (req, res) => {
             }
     
         // find one student by their id
-        const student = studentData.students.find(student => student.id === id)
+        const student = await getStudent(id);
     
         if(!student){
             throw("No student found with this id.");
@@ -31,7 +30,6 @@ controller.get('/:id', (req, res) => {
     
         res.json(student);
     } catch (err){
-        console.log(err);
         res.status(500).send(err);
     }
 })
@@ -42,31 +40,26 @@ controller.post('/', async (req, res) => {
         const studentData = req.body;
         
         if(!studentData.email){
-            res.status(500).send('Email is required');
+            throw 'Email is required'
         } else if ( !isValidEmail(studentData.email)) {
-            res.status(500).send('Email is not valid');
+            throw 'Email is not valid';
         }
 
         const student = await saveStudent(studentData)
+
         res.json(student);
     } catch (err){
-        res.status(500).send(err.message)
+        res.status(500).send(err)
     }
 });
 
-function isValidEmail(email){
-    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
-}
-
-controller.put('/', async (req, res) => {
+controller.put('/:id', async (req, res) => {
     try {
-
-        const studentData = req.body;
+        const studentData = {id: req.params.id, ...req.body};
 
         //validate email
         if(studentData.email && !isValidEmail(studentData.email)){
-            res.status(500).send('Please use a valid email');
-            return;
+            throw 'Please use a valid email';
         }
 
         const student = await updateStudent(studentData);
@@ -75,7 +68,22 @@ controller.put('/', async (req, res) => {
 
 
     } catch (err){
-        res.status(500).send(err.message);
+        res.status(500).send(err);
+    }
+})
+
+controller.delete('/:id', async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        
+        // delete a student matching the given id 
+        const deletedStudent = await deleteStudent(studentId);
+
+        res.json(deletedStudent);
+
+
+    } catch (err){
+        res.status(500).send(err)
     }
 })
 
