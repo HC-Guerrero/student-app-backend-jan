@@ -47,7 +47,12 @@ controller.post('/', async (req, res) => {
 
         const student = await saveStudent(studentData)
 
-        res.json(student);
+        const data = {
+            payload: student,
+            status: 'success'
+        }
+      
+        res.json(data);
     } catch (err){
         res.status(500).send(err)
     }
